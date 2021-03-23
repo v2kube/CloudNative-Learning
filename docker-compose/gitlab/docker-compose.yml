@@ -1,0 +1,30 @@
+gitlab:
+  image: 'gitlab/gitlab-ee:13.9.4-ee.0'
+  restart: always
+  hostname: 'gitlab.v2k8s.com'
+  environment:
+    GITLAB_OMNIBUS_CONFIG: |
+      external_url 'https://gitlab.v2k8s.com'
+      gitlab_rails['gitlab_shell_ssh_port'] = 2222
+      gitlab_rails['time_zone'] = 'PRC'
+      nginx['enable'] = true
+      nginx['redirect_http_to_https'] = true
+      nginx['redirect_http_to_https_port'] = 80
+      unicorn['worker_processes'] = 2
+      unicorn['worker_timeout'] = 60
+      sidekiq['concurrency'] = 4
+      # 解决 GitLab 响应 Forbidden
+      gitlab_rails['rack_attack_git_basic_auth'] = {'enabled' => true, 'ip_whitelist' => ["0.0.0.0"], 'maxretry' => 300, 'findtime' => 5, 'bantime' => 60}
+      # Add any other gitlab.rb configuration here, each on its own line
+  # 内存和CPU限制，worker_processes 配置声明使用2核CPU
+  mem_limit: 4000m
+  cpu_shares: 200 #2核
+  ports:
+    - '80:80'
+    - '443:443'
+    - '2222:22'
+  volumes:
+    - '/data/gitlab/config:/etc/gitlab'
+    - '/data/gitlab/logs:/var/log/gitlab'
+    - '/data/gitlab/data:/var/opt/gitlab'
+    - '/etc/localtime:/etc/localtime'
